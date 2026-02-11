@@ -394,12 +394,24 @@ Current Progress: {self.current_story_node}
         result = self.combat_system.execute_action(CombatAction.ATTACK, str(damage))
         
         if result.get("victory"):
-            # Enemy defeated, return to exploring
-            response = result.get("message", "Victory!")
-            response += f"\n\nYou gain {random.randint(10, 50)} experience points!"
-            self.state = GameState.EXPLORING
-            self.combat_system = None
-            return response
+            # Check if this was a boss enemy
+            is_boss = self.combat_system.enemy and self.combat_system.enemy.max_health > 50
+            
+            if is_boss:
+                # Boss defeated = Story victory!
+                response = result.get("message", "Victory!")
+                response += f"\n\n🎉 YOU HAVE DEFEATED THE {self.combat_system.enemy.name.upper()}!\n"
+                response += f"The curse is lifted and peace returns to the land!"
+                self.state = GameState.VICTORY
+                self.combat_system = None
+                return response
+            else:
+                # Regular enemy defeated
+                response = result.get("message", "Victory!")
+                response += f"\n\nYou gain {random.randint(10, 50)} experience points!"
+                self.state = GameState.EXPLORING
+                self.combat_system = None
+                return response
         
         if result.get("defeat"):
             self.state = GameState.DEFEAT
@@ -415,9 +427,17 @@ Current Progress: {self.current_story_node}
         result = self.combat_system.execute_action(CombatAction.DEFEND)
         
         if result.get("victory"):
+            is_boss = self.combat_system.enemy and self.combat_system.enemy.max_health > 50
             response = result.get("message", "Victory!")
-            response += f"\n\nYou gain {random.randint(10, 50)} experience points!"
-            self.state = GameState.EXPLORING
+            
+            if is_boss:
+                response += f"\n\n🎉 YOU HAVE DEFEATED THE {self.combat_system.enemy.name.upper()}!\n"
+                response += f"The curse is lifted and peace returns to the land!"
+                self.state = GameState.VICTORY
+            else:
+                response += f"\n\nYou gain {random.randint(10, 50)} experience points!"
+                self.state = GameState.EXPLORING
+            
             self.combat_system = None
             return response
         
@@ -444,9 +464,17 @@ Current Progress: {self.current_story_node}
             self.player.inventory.remove(item)
         
         if result.get("victory"):
+            is_boss = self.combat_system.enemy and self.combat_system.enemy.max_health > 50
             response = result.get("message", "Victory!")
-            response += f"\n\nYou gain {random.randint(10, 50)} experience points!"
-            self.state = GameState.EXPLORING
+            
+            if is_boss:
+                response += f"\n\n🎉 YOU HAVE DEFEATED THE {self.combat_system.enemy.name.upper()}!\n"
+                response += f"The curse is lifted and peace returns to the land!"
+                self.state = GameState.VICTORY
+            else:
+                response += f"\n\nYou gain {random.randint(10, 50)} experience points!"
+                self.state = GameState.EXPLORING
+            
             self.combat_system = None
             return response
         
@@ -498,19 +526,40 @@ Current Progress: {self.current_story_node}
     def start_encounter(self):
         """Start a combat encounter."""
         self.state = GameState.IN_COMBAT
-        enemy_names = ["Goblin", "Orc", "Skeleton", "Shadow"]
-        enemy_name = random.choice(enemy_names)
         
-        enemy = Enemy(
-            name=enemy_name,
-            health=30,
-            max_health=30,
-            damage=8,
-            armor=2,
-        )
+        # Decide if this should be a boss encounter
+        is_boss = self.turn_count > 40 and random.random() < 0.3
+        
+        if is_boss:
+            # Boss encounter
+            antagonist = self.story.protagonist_goal.split("Stop ")[1].split(" ")[0] if "Stop " in self.story.protagonist_goal else "Dark Lord"
+            enemy = Enemy(
+                name=antagonist,
+                health=80,
+                max_health=80,
+                damage=15,
+                armor=5,
+            )
+            message = f"\n⚠️  BOSS ENCOUNTER! {antagonist} appears!\n"
+        else:
+            # Regular encounter
+            enemy_names = ["Goblin", "Orc", "Skeleton", "Shadow", "Bandit", "Minion"]
+            enemy_name = random.choice(enemy_names)
+            
+            enemy = Enemy(
+                name=enemy_name,
+                health=30,
+                max_health=30,
+                damage=8,
+                armor=2,
+            )
+            message = ""
         
         self.combat_system = CombatSystem(self.player.health, self.player.get_total_armor())
         self.combat_system.start_encounter(enemy)
+        
+        if message:
+            print(message)
     
     def is_running(self) -> bool:
         """Check if game is running."""
