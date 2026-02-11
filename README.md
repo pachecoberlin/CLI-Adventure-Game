@@ -243,3 +243,52 @@ This project is part of the GitHub Copilot CLI demonstration.
 ---
 
 **Enjoy your adventure!** 🗡️ 🐉 ✨
+
+## Story Completion System
+
+The game features a **story completion system** where defeating a boss enemy triggers a story victory.
+
+### How to Reach Victory
+1. **Explore the world** - Navigate through different locations
+2. **Collect items** - Find weapons, armor, and healing items
+3. **Prepare for combat** - Equip the best gear available
+4. **Defeat the Boss** - After turn 40+, you may encounter the final boss
+5. **Victory!** - Defeating the boss completes the story
+
+### Boss Mechanics
+- Boss appears after ~40 turns of gameplay
+- Boss has 80 HP vs. regular enemies' 30 HP
+- Boss deals 15 damage vs. regular enemies' 8 damage  
+- Boss has higher armor (5) vs. regular enemies' (2)
+- Defeating the boss triggers a story ending screen
+
+### Winning Strategy
+- Collect healing items throughout the game
+- Equip the strongest weapon you find
+- Equip armor to reduce incoming damage
+- Use defend action to reduce damage further
+- Use healing strategically during boss fight
+
+## Version History
+
+### v2.0 (Current - Feature Complete)
+✅ Dynamic story generation
+✅ Fixed map with varied transitions
+✅ Combat system with full mechanics
+✅ Item discovery and equipment
+✅ NPC interaction framework
+✅ Optional combat encounters
+✅ Story ending with boss defeat
+✅ ASCII art generation
+✅ Multi-genre support (4 genres)
+
+### Features Confirmed Working
+- Story generation works for all 4 genres
+- Combat system fully functional with all actions
+- Equipment bonuses properly calculated
+- Boss encounters detectable and defeatable
+- Game completion verified through testing
+
+---
+
+**Ready to Play!** 🎮
