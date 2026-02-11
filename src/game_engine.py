@@ -83,6 +83,29 @@ class Location:
 class Adventure:
     """Main game engine."""
     
+    ENCOUNTERS = {
+        "fantasy": [
+            {"name": "Goblin", "damage": 15, "reward": "gold_coin"},
+            {"name": "Orc", "damage": 25, "reward": "shield"},
+            {"name": "Troll", "damage": 35, "reward": "magic_gem"},
+        ],
+        "scifi": [
+            {"name": "Robot", "damage": 20, "reward": "data_chip"},
+            {"name": "Alien", "damage": 30, "reward": "alien_tech"},
+            {"name": "Cyborg", "damage": 40, "reward": "power_core"},
+        ],
+        "detective": [
+            {"name": "Thug", "damage": 20, "reward": "clue"},
+            {"name": "Suspect", "damage": 15, "reward": "evidence"},
+            {"name": "Crime Boss", "damage": 40, "reward": "case_file"},
+        ],
+        "horror": [
+            {"name": "Ghost", "damage": 25, "reward": "holy_relic"},
+            {"name": "Zombie", "damage": 20, "reward": "cursed_amulet"},
+            {"name": "Demon", "damage": 50, "reward": "exorcism_scroll"},
+        ],
+    }
+    
     def __init__(self, interest: str, player_name: str = "Adventurer"):
         self.interest = interest
         self.player = Character(name=player_name)
@@ -92,6 +115,7 @@ class Adventure:
         self.visited_locations: set = set()
         self.completed_objectives: set = set()
         self.history: List[str] = []
+        self.encounter_count = 0
         
     def start_game(self):
         """Initialize the game."""
@@ -101,30 +125,47 @@ class Adventure:
     
     def _setup_world(self):
         """Create the game world based on interest."""
-        # Create starting location
         start_desc = f"You find yourself in a mysterious realm tailored to {self.interest}..."
         start_loc = Location("Starting Point", start_desc)
-        
-        # Add some basic items
         start_loc.items.append(Item("torch", "A flickering torch that provides light", usable=True))
-        
         self.current_location = start_loc
         self.visited_locations.add("Starting Point")
     
+    def trigger_random_encounter(self) -> Optional[str]:
+        """Randomly trigger an encounter."""
+        if random.random() < 0.2 and self.player.is_alive():
+            encounters = self.ENCOUNTERS.get(self.interest, self.ENCOUNTERS["fantasy"])
+            encounter = random.choice(encounters)
+            self.encounter_count += 1
+            
+            damage = encounter["damage"]
+            self.player.take_damage(damage)
+            
+            msg = f"\n⚠️  A wild {encounter['name']} appears!\n"
+            msg += f"You take {damage} damage! Health: {self.player.health}/100\n"
+            
+            if not self.player.is_alive():
+                self.state = GameState.DEFEAT
+                msg += "You have been defeated...\n"
+            
+            return msg
+        return None
+    
     def process_command(self, command: str) -> str:
         """Process player command."""
+        if not self.is_running():
+            return "Game has ended. Type 'quit' to exit."
+        
         self.turn_count += 1
         command = command.strip().lower()
         
         if not command:
             return "Please enter a valid command."
         
-        # Parse command
         parts = command.split(maxsplit=1)
         action = parts[0]
         target = parts[1] if len(parts) > 1 else ""
         
-        # Command handlers
         handlers = {
             "look": self.cmd_look,
             "go": self.cmd_go,
@@ -154,6 +195,11 @@ class Adventure:
             for item in self.current_location.items:
                 response += f"  - {item.name}\n"
         
+        if self.current_location.npcs:
+            response += "\nPeople here:\n"
+            for npc in self.current_location.npcs:
+                response += f"  - {npc}\n"
+        
         if self.current_location.exits:
             response += "\nYou can go:\n"
             for direction in self.current_location.exits:
@@ -171,7 +217,14 @@ class Adventure:
         
         self.current_location = self.current_location.exits[direction]
         self.visited_locations.add(self.current_location.name)
-        return self.cmd_look()
+        
+        response = self.cmd_look()
+        
+        encounter = self.trigger_random_encounter()
+        if encounter:
+            response += encounter
+        
+        return response
     
     def cmd_take(self, target: str) -> str:
         """Pick up an item."""
@@ -207,7 +260,7 @@ class Adventure:
         if not self.player.inventory:
             return "Your inventory is empty."
         
-        response = "Inventory:\n"
+        response = "🎒 Inventory:\n"
         for item in self.player.inventory:
             response += f"  - {item.name}: {item.description}\n"
         return response
@@ -224,7 +277,19 @@ class Adventure:
         if not item.usable:
             return f"You can't use the {item.name}."
         
-        return f"You use the {item.name}. Something happens..."
+        effects = {
+            "potion": "You drink the potion and feel refreshed! Health restored.",
+            "spell_book": "You read from the spell book and feel magical energy flow through you!",
+            "torch": "The torch lights up, illuminating your surroundings.",
+            "scanner": "The scanner beeps and displays data about your location.",
+            "repair_kit": "You repair something nearby. It starts working again!",
+            "magnifying_glass": "You examine your surroundings carefully with the magnifying glass.",
+            "salt": "You create a protective circle of salt around you.",
+            "lantern": "The lantern glows brightly, pushing back the darkness.",
+        }
+        
+        effect = effects.get(item.name.lower(), f"You use the {item.name}. Something happens...")
+        return effect
     
     def cmd_help(self, target: str = "") -> str:
         """Show available commands."""
@@ -240,11 +305,13 @@ class Adventure:
     
     def cmd_status(self, target: str = "") -> str:
         """Show player status."""
-        return f"""Status:
+        status = f"""Status:
   Name: {self.player.name}
   Health: {self.player.health}/100
   Turns: {self.turn_count}
-  Locations visited: {len(self.visited_locations)}"""
+  Locations visited: {len(self.visited_locations)}
+  Encounters survived: {self.encounter_count}"""
+        return status
     
     def is_running(self) -> bool:
         """Check if game is still running."""
