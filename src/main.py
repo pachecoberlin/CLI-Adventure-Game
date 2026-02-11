@@ -1,6 +1,8 @@
 """Main game controller for the rewritten adventure game."""
 
 import sys
+sys.path.insert(0, ".")
+
 from src.dynamic_ascii import DynamicASCII
 from src.new_game_engine import NewAdventure
 from src.item_system import ItemFactory, Item, ItemType
@@ -87,28 +89,7 @@ class Game:
         print(f"Keywords: {', '.join(self.adventure.story.keywords)}")
         print(f"Combat Encounters: {'Enabled' if encounters else 'Disabled'}")
         print(f"\nType 'help' for commands.\n")
-        
-        # Add starting items
-        self._add_starting_items(genre)
     
-    def _add_starting_items(self, genre: str):
-        """Add starting items based on genre."""
-        starting_items = [
-            Item("Backpack", "A sturdy bag for carrying items", ItemType.QUEST),
-            Item("Map", "A map of the land", ItemType.QUEST),
-        ]
-        
-        # Add a weapon
-        weapons = ItemFactory.get_weapons(genre)
-        if weapons:
-            starting_items.append(weapons[0])
-        
-        # Add a healing item
-        healing = ItemFactory.get_healing_items()
-        if healing:
-            starting_items.append(healing[0])
-        
-        self.adventure.player.inventory.extend(starting_items)
     
     def run_game_loop(self):
         """Main game loop."""
