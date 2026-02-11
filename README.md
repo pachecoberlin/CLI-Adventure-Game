@@ -1,101 +1,245 @@
-# CLI Adventure Game
+# CLI Adventure Game - Next Generation
 
-An interactive text-based adventure game where each playthrough generates a unique, dynamic story based on your interests.
+A dynamic, text-based adventure game that generates a unique story and world for each playthrough.
 
 ## Features
 
-- **Dynamic Story Generation**: Each game creates a completely new adventure
-- **Multiple Scenarios**: Choose from Fantasy, Sci-Fi, Detective, or Horror themes
-- **ASCII Art**: Beautiful ASCII artwork enhances the atmosphere
-- **Rich Command System**: Explore, take items, manage inventory, and more
-- **Replayability**: No two games are ever the same
+### 🎮 Core Gameplay
+- **Dynamic Story Generation**: Each game creates a unique storyline with themes (Fantasy, Sci-Fi, Detective, Horror)
+- **Fixed World Map**: Explore a consistent world with varied routes, dead ends, and special transitions
+- **Multi-Round Combat**: Strategic encounters with attack, defend, heal, and flee actions
+- **Item Management**: Find, equip, and use items that affect your abilities
+- **NPC Interactions**: Talk to characters for clues, items, and story progression
 
-## Installation
+### 🛠️ Systems
+
+#### Story Generation
+- Template-based story creation with 4 genres
+- Automatic location extraction from story narratives
+- Quest tracking and story node progression
+- Dynamic antagonist and goal generation
+
+#### Map System
+- Fixed routes between locations (not randomly generated)
+- Dead ends and varied connections
+- Special transitions (teleports, one-way passages, entering locations)
+- Location descriptions that vary on first visit vs. revisits
+
+#### Combat System
+- Multi-round combat with damage calculation
+- Armor-based damage reduction
+- Combat actions: Attack, Defend, Heal, Flee
+- Enemy variety with different stats
+- Victory/Defeat conditions
+
+#### Item System
+- Weapons (increase damage)
+- Armor (reduce damage taken)
+- Healing items (consumable and reusable)
+- Quest items (unlock locations)
+- Genre-specific item pools
+
+#### Character System
+- Player health and healing
+- Equipment management (weapon/armor slots)
+- Inventory with carrying capacity
+- Character statistics
+
+### 🎨 Immersion
+- Dynamic ASCII art for locations and creatures
+- Genre-appropriate descriptions
+- Atmospheric feedback and events
+- Encounter system (optional/experimental)
+
+## Getting Started
+
+### Installation
 
 ```bash
-# Clone the repository
 git clone git@github.com:pachecoberlin/CLI-Adventure-Game.git
 cd CLI-Adventure-Game
-
-# Install dependencies
-pip install -e ".[dev]"
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-## Running the Game
+### Playing the Game
 
 ```bash
-python -m src.main
+python src/main.py
 ```
 
-## How to Play
+Follow the prompts to:
+1. Enter your character name
+2. Choose a genre (Fantasy, Sci-Fi, Detective, Horror)
+3. Enter keywords to shape the story
+4. Enable/disable combat encounters (experimental feature)
 
-1. **Start the game** - You'll be greeted with a welcome screen
-2. **Choose your scenario** - Pick from Fantasy, Sci-Fi, Detective, or Horror
-3. **Enter your name** - Give your character an identity
-4. **Explore and interact** - Use commands to move around and interact with the world
+### Commands
 
-## Available Commands
+While playing:
 
-- `look` - Describe your current surroundings
-- `go <direction>` - Move in a direction (north, south, east, west)
-- `take <item>` - Pick up an item
-- `drop <item>` - Drop an item from your inventory
-- `inventory` - Show what you're carrying
-- `use <item>` - Use an item
-- `status` - Check your health and statistics
-- `help` - Show all available commands
-- `quit` or `exit` - Exit the game
+```
+look              - Examine your current location
+go <direction>    - Move (north, south, east, west)
+take <item>       - Pick up an item
+drop <item>       - Drop an item from inventory
+inventory         - Show your items
+equip <item>      - Equip a weapon or armor
+unequip <item>    - Remove equipment
+use <item>        - Use an item
+talk <npc>        - Talk to someone
+inspect <object>  - Look closely at something
+status            - Show your character status
+story             - Show story progress
+help              - Show this help message
+
+[In Combat]
+attack            - Attack the enemy
+defend            - Brace for impact
+heal              - Use a healing item
+flee              - Try to escape
+```
+
+## Game Design
+
+### Story Modes
+
+Each playthrough generates a story with:
+- A protagonist (the player)
+- An antagonist (the goal)
+- Multiple locations connected by meaningful routes
+- Quest objectives and progression
+
+Genres available:
+- **Fantasy**: Dragons, magic, quests, curses
+- **Sci-Fi**: Space stations, AI, alien worlds, technology
+- **Detective**: Crime scenes, clues, suspects, investigations
+- **Horror**: Haunted locations, creatures, supernatural events
+
+### Map Design
+
+The world is built with:
+- **Locations**: Each location has a description that varies based on visit status
+- **Transitions**: Routes between locations with different types (normal, enter, teleport, one-way)
+- **Items**: Found scattered throughout the world
+- **NPCs**: Characters to interact with for information and rewards
+
+### Combat
+
+Combat is tactical:
+1. **Attack**: Deal damage to enemy (damage = weapon bonus ± variance)
+2. **Defend**: Reduce damage taken this round
+3. **Heal**: Use a healing item (takes action, doesn't attack)
+4. **Flee**: Attempt to escape (60% success rate)
+
+Damage calculation:
+```
+damage_dealt = base_damage - enemy_armor + random_variance
+```
+
+## Architecture
+
+```
+src/
+  ├── main.py                 # Entry point and game controller
+  ├── new_game_engine.py      # Core game loop and state management
+  ├── story_generator.py      # Dynamic story creation
+  ├── map_system.py           # World structure and navigation
+  ├── item_system.py          # Items and equipment
+  ├── combat_system.py        # Multi-round combat
+  ├── npc_system.py           # NPCs and dialogue
+  └── dynamic_ascii.py        # ASCII art generation
+
+tests/
+  ├── test_game_run.py        # Basic system tests
+  ├── test_combat_scenario.py # Combat mechanics
+  ├── test_full_game.py       # Integration testing
+  └── complete_playthrough.py # End-to-end playthrough
+```
 
 ## Testing
 
+Run automated playthroughs:
+
 ```bash
-pytest tests/ -v
+# Basic functionality test
+python test_game_run.py
+
+# Combat system test
+python test_combat_scenario.py
+
+# Full playthrough
+python complete_playthrough.py
 ```
 
-## Project Structure
+## Current Features (v2.0)
 
-```
-CLI-Adventure-Game/
-├── src/
-│   ├── main.py              # Entry point and game controller
-│   ├── game_engine.py       # Core game logic
-│   ├── scenario_generator.py # World generation
-│   └── ascii_art.py         # Visual elements
-├── tests/
-│   └── test_game.py         # Unit tests
-├── pyproject.toml           # Project configuration
-└── README.md                # This file
-```
+✅ Dynamic story generation
+✅ Fixed map with varied routes
+✅ Item discovery and equipment
+✅ Multi-round combat with mechanics
+✅ NPC interactions
+✅ Combat encounters (optional)
+✅ Character progression tracking
+✅ ASCII art generation
+✅ Multiple genres
 
-## Game Scenarios
+## Planned Features
 
-### Fantasy
-Explore magical forests, dragon lairs, and enchanted castles. Discover ancient artifacts and meet mystical creatures.
-
-### Sci-Fi
-Navigate space stations, alien planets, and futuristic cities. Use advanced technology and solve technological mysteries.
-
-### Detective
-Investigate crime scenes, interrogate suspects, and uncover clues. Solve the mystery!
-
-### Horror
-Survive in haunted mansions, dark forests, and eerie locations. Face your fears and escape the terror.
-
-## Future Enhancements
-
-- [ ] NPC interactions and dialogue
-- [ ] Combat system
-- [ ] Puzzle solving
-- [ ] Item crafting
-- [ ] Saving and loading games
+- [ ] Story endings and victory conditions
+- [ ] Advanced NPC dialogue trees
+- [ ] Quest tracking system
+- [ ] Skill system
+- [ ] Save/Load functionality
 - [ ] Difficulty levels
-- [ ] More scenarios
-- [ ] Achievements and statistics
+- [ ] More detailed ASCII art
+- [ ] Sound effects (optional)
+- [ ] Expanded genre options
+
+## Development
+
+### Adding a New Genre
+
+1. Add templates to `StoryGenerator.STORY_TEMPLATES`
+2. Add weapons/armor/healing to `ItemFactory` templates
+3. Add NPCs to `NPCFactory.NPC_TEMPLATES`
+4. Add ASCII art to `DynamicASCII`
+
+Example:
+```python
+# story_generator.py
+"your_genre": {
+    "themes": ["theme1", "theme2"],
+    "locations": ["Location 1", "Location 2"],
+    # ... more templates
+}
+```
+
+## Contributing
+
+Issues and pull requests are welcome!
 
 ## License
 
-MIT
+This project is part of the GitHub Copilot CLI demonstration.
 
-## Author
+## Changelog
 
-Built with GitHub Copilot CLI
+### v2.0 (Current)
+- Complete engine rewrite
+- Story generation system
+- Fixed map with varied transitions
+- Combat mechanics overhaul
+- NPC system implementation
+- Item system with equipment
+- ASCII art generation
+
+### v1.0
+- Initial MVP with basic exploration
+- Simple combat
+- Random map generation
+
+---
+
+**Enjoy your adventure!** 🗡️ 🐉 ✨
