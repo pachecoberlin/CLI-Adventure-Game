@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=65.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cli-adventure-game"
+version = "0.1.0"
+description = "A text-based adventure game with AI-generated scenarios"
+requires-python = ">=3.9"
+dependencies = [
+    "anthropic>=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
