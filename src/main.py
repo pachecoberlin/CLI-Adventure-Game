@@ -1,80 +1,117 @@
-"""Main game interface and entry point."""
+"""Main game controller for the rewritten adventure game."""
 
 import sys
-from src.ascii_art import WELCOME_BANNER, print_banner, get_random_ascii_art
-from src.game_engine import Adventure
-from src.scenario_generator import ScenarioGenerator
+from src.dynamic_ascii import DynamicASCII
+from src.new_game_engine import NewAdventure
+from src.item_system import ItemFactory, Item, ItemType
 
 
 class Game:
-    """Main game controller."""
+    """Game controller."""
     
-    INTERESTS = ["fantasy", "scifi", "detective", "horror"]
+    GENRES = ["fantasy", "scifi", "detective", "horror"]
     
     def __init__(self):
-        self.adventure: Adventure = None
+        self.adventure: NewAdventure = None
     
-    def welcome(self):
-        """Show welcome screen."""
-        print(WELCOME_BANNER)
-        print(get_random_ascii_art())
-    
-    def get_player_interest(self) -> str:
-        """Ask player for their preferred adventure type."""
-        print_banner("Choose Your Adventure Type")
-        print("What interests you?\n")
-        
-        for i, interest in enumerate(self.INTERESTS, 1):
-            print(f"{i}. {interest.capitalize()}")
-        
-        while True:
-            try:
-                choice = input("\nEnter number (1-4) or type interest: ").strip().lower()
-                
-                # Handle numeric choice
-                if choice.isdigit():
-                    idx = int(choice) - 1
-                    if 0 <= idx < len(self.INTERESTS):
-                        return self.INTERESTS[idx]
-                
-                # Handle text choice
-                if choice in self.INTERESTS:
-                    return choice
-                
-                print("Invalid choice. Please try again.")
-            except KeyboardInterrupt:
-                sys.exit(0)
+    def show_welcome(self):
+        """Show welcome banner."""
+        print("""
+╔═══════════════════════════════════════════════════════════════╗
+║                  CLI ADVENTURE GAME (v2.0)                   ║
+║              A Dynamic Text-Based Adventure                  ║
+╚═══════════════════════════════════════════════════════════════╝
+        """)
+        print(DynamicASCII.get_location_art("castle"))
     
     def get_player_name(self) -> str:
-        """Ask for player name."""
+        """Get player name."""
         while True:
             name = input("\nWhat is your name, adventurer? ").strip()
-            if name and len(name) <= 20:
+            if name and 1 <= len(name) <= 30:
                 return name
-            print("Please enter a valid name (1-20 characters).")
+            print("Please enter a valid name (1-30 characters).")
+    
+    def get_genre(self) -> str:
+        """Get preferred genre."""
+        print("\n📖 Choose your adventure type:\n")
+        for i, genre in enumerate(self.GENRES, 1):
+            print(f"  {i}. {genre.capitalize()}")
+        
+        while True:
+            choice = input("\nEnter number or genre name: ").strip().lower()
+            
+            if choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(self.GENRES):
+                    return self.GENRES[idx]
+            
+            if choice in self.GENRES:
+                return choice
+            
+            print("Invalid choice. Try again.")
+    
+    def get_keywords(self) -> list:
+        """Get story keywords."""
+        keywords_str = input("\nEnter story keywords (comma-separated, e.g., 'magic, dragons, prophecy'): ").strip()
+        keywords = [k.strip() for k in keywords_str.split(",") if k.strip()]
+        return keywords if keywords else ["adventure"]
+    
+    def get_encounters_preference(self) -> bool:
+        """Ask if player wants encounters enabled."""
+        while True:
+            choice = input("\nEnable combat encounters? (y/n): ").strip().lower()
+            if choice in ['y', 'yes']:
+                return True
+            if choice in ['n', 'no']:
+                return False
+            print("Please enter 'y' or 'n'.")
     
     def start_new_game(self):
-        """Initialize a new adventure."""
-        interest = self.get_player_interest()
+        """Initialize a new game."""
+        self.show_welcome()
+        
         player_name = self.get_player_name()
+        genre = self.get_genre()
+        keywords = self.get_keywords()
+        encounters = self.get_encounters_preference()
         
-        self.adventure = Adventure(interest, player_name)
-        self.adventure.start_game()
+        self.adventure = NewAdventure(player_name)
+        self.adventure.initialize_game(genre, keywords, encounters)
         
-        # Generate the world
-        ScenarioGenerator.generate_world(self.adventure)
+        print(f"\n{'='*60}")
+        print(f"Welcome, {player_name}!")
+        print(f"{'='*60}\n")
+        print(f"Story: {self.adventure.story.title}")
+        print(f"Goal: {self.adventure.story.protagonist_goal}")
+        print(f"Keywords: {', '.join(self.adventure.story.keywords)}")
+        print(f"Combat Encounters: {'Enabled' if encounters else 'Disabled'}")
+        print(f"\nType 'help' for commands.\n")
         
-        # Show starting message
-        print_banner(f"Welcome, {player_name}!")
-        print(ScenarioGenerator.get_scenario_description(interest))
-        print(get_random_ascii_art())
-        print("\nType 'help' for available commands.\n")
+        # Add starting items
+        self._add_starting_items(genre)
+    
+    def _add_starting_items(self, genre: str):
+        """Add starting items based on genre."""
+        starting_items = [
+            Item("Backpack", "A sturdy bag for carrying items", ItemType.QUEST),
+            Item("Map", "A map of the land", ItemType.QUEST),
+        ]
+        
+        # Add a weapon
+        weapons = ItemFactory.get_weapons(genre)
+        if weapons:
+            starting_items.append(weapons[0])
+        
+        # Add a healing item
+        healing = ItemFactory.get_healing_items()
+        if healing:
+            starting_items.append(healing[0])
+        
+        self.adventure.player.inventory.extend(starting_items)
     
     def run_game_loop(self):
         """Main game loop."""
-        if not self.adventure:
-            self.start_new_game()
-        
         while self.adventure.is_running():
             try:
                 command = input("➜ ").strip()
@@ -82,7 +119,6 @@ class Game:
                 if not command:
                     continue
                 
-                # Special quit command
                 if command.lower() in ["quit", "exit"]:
                     print("\nThanks for playing!")
                     break
@@ -90,17 +126,49 @@ class Game:
                 response = self.adventure.process_command(command)
                 print(response)
                 
-                # Show occasional ASCII art
-                if self.adventure.turn_count % 5 == 0:
-                    print("\n" + get_random_ascii_art())
+                # Show ASCII art occasionally
+                if self.adventure.turn_count % 8 == 0:
+                    print("\n" + DynamicASCII.get_random_art())
                 
             except KeyboardInterrupt:
                 print("\n\nGame interrupted. Thanks for playing!")
                 break
+        
+        # Check if story completed
+        if self.adventure.state.name == "VICTORY":
+            self.show_victory()
+        elif self.adventure.state.name == "DEFEAT":
+            self.show_defeat()
+    
+    def show_victory(self):
+        """Show victory screen."""
+        print("""
+╔═══════════════════════════════════════════════════════════════╗
+║                         🏆 VICTORY 🏆                         ║
+║                                                               ║
+║              You have completed your quest!                  ║
+║         The world has been saved by your bravery.           ║
+╚═══════════════════════════════════════════════════════════════╝
+        """)
+        print(f"Final Stats:")
+        print(f"  Turns: {self.adventure.turn_count}")
+        print(f"  Health: {self.adventure.player.health}/{self.adventure.player.max_health}")
+        print(f"  Locations: {len(set(loc.name for loc in self.adventure.map.locations.values() if loc.visited))}")
+    
+    def show_defeat(self):
+        """Show defeat screen."""
+        print("""
+╔═══════════════════════════════════════════════════════════════╗
+║                        💀 DEFEAT 💀                           ║
+║                                                               ║
+║            You have fallen in your adventure.                ║
+║                Better luck next time...                      ║
+╚═══════════════════════════════════════════════════════════════╝
+        """)
     
     def run(self):
         """Run the game."""
-        self.welcome()
+        self.start_new_game()
         self.run_game_loop()
 
 
